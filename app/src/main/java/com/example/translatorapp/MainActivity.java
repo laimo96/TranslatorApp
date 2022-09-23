@@ -1,16 +1,27 @@
 package com.example.translatorapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.mlkit.common.model.DownloadConditions;
+import com.google.mlkit.nl.translate.NaturalLanguageTranslateRegistrar;
 import com.google.mlkit.nl.translate.TranslateLanguage;
+import com.google.mlkit.nl.translate.Translation;
+import com.google.mlkit.nl.translate.Translator;
+import com.google.mlkit.nl.translate.TranslatorOptions;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,9 +55,7 @@ public class MainActivity extends AppCompatActivity {
     // Permissions
     private static final int REQUEST_CODE = 1;
 
-    String languageCode;
-    int fromLanguageCode;
-    int toLanguageCode;
+    String languageCode, fromLanguageCode, toLanguageCode;
 
 
     @Override
@@ -60,10 +69,12 @@ public class MainActivity extends AppCompatActivity {
         translateButton = findViewById(R.id.button);
         translatedText = findViewById(R.id.translatedTextVew);
 
+
+        // Spinner 1
         fromSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                fromLanguageCode = GetLanguageCode();
+            public void onItemSelected(AdapterView<?> parent, View view, int i, long id) {
+                fromLanguageCode = GetLanguageCode(fromLanguages[i]);
             }
 
             @Override
@@ -71,6 +82,101 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        // Adapter allows us to bind data from the array from languages and display it into the spinner
+        // and to make an action to select the data from the spinner
+        ArrayAdapter fromAdapter = new ArrayAdapter(this,
+                R.layout.spinner_item, fromLanguages);
+        fromAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        fromSpinner.setAdapter(fromAdapter);
+
+
+        // Spinner 2
+        toSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int i, long id) {
+                toLanguageCode = GetLanguageCode(toLanguages[i]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        ArrayAdapter toAdapter = new ArrayAdapter(this, R.layout.spinner_item,
+                toLanguages);
+        toAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        toSpinner.setAdapter(toAdapter);
+
+
+
+        // Translate button
+        translateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                translatedText.setText("");
+
+                if(mainEdit.getText().toString().isEmpty()){
+                    Toast.makeText(MainActivity.this, "Please Enter Your Text",
+                            Toast.LENGTH_SHORT).show();
+                } else if(fromLanguageCode.isEmpty()){
+                    Toast.makeText(MainActivity.this, "Please Select Main Language", Toast.LENGTH_SHORT).show();
+                } else if(toLanguageCode.isEmpty()){
+                    Toast.makeText(MainActivity.this, "Please Select Target Language", Toast.LENGTH_SHORT).show();
+                }else{
+                    TranslateText(fromLanguageCode, toLanguageCode, mainEdit.getText().toString());
+                }
+            }
+        });
+
+
+    }
+
+    private void TranslateText(String fromLanguageCode, String toLanguageCode, String src) {
+
+        translatedText.setText("Downloading Language Model");
+
+
+        try{
+            TranslatorOptions options = new TranslatorOptions.Builder().setSourceLanguage(fromLanguageCode)
+                    .setTargetLanguage(toLanguageCode).build();
+
+
+            Translator translator = Translation.getClient(options);
+
+            DownloadConditions conditions = new DownloadConditions.Builder().build();
+
+            translator.downloadModelIfNeeded(conditions).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void unused) {
+
+                    translatedText.setText("Translating...");
+
+                    translator.translate(src).addOnSuccessListener(new OnSuccessListener<String>() {
+                        @Override
+                        public void onSuccess(String s) {
+                            translatedText.setText(s);
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(MainActivity.this, "Failed To Translate", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(MainActivity.this, "Failed To Download The Language", Toast.LENGTH_SHORT).show();
+                }
+            })
+            ;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private String GetLanguageCode(String language) {
