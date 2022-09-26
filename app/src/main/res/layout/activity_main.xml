@@ -35,10 +35,11 @@
         android:id="@+id/idToSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="52dp"
         android:layout_marginStart="10dp"
+        android:layout_marginTop="84dp"
         android:layout_marginEnd="10dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/idFromSpinner" />
 
@@ -46,11 +47,12 @@
         android:id="@+id/editMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="68dp"
         android:layout_marginStart="10dp"
+        android:layout_marginTop="72dp"
         android:layout_marginEnd="10dp"
         android:hint="Enter Text To Translate"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/idToSpinner" />
 
